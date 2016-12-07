@@ -2889,9 +2889,13 @@ void EMfields3D::sustensorX(double **susxx, double **susxy, double **susxz, int 
         omcx = beta * (Bxn[N][j][k] + Fext*Bx_ext[N][j][k]);
         omcy = beta * (Byn[N][j][k] + Fext*By_ext[N][j][k]);
         omcz = beta * (Bzn[N][j][k] + Fext*Bz_ext[N][j][k]);
+<<<<<<< HEAD
 
         denom = FourPI / 2 * delt * dt / c * qom[is] * rhons[is][N][j][k] / (1.0 + omcx * omcx + omcy * omcy + omcz * omcz);
 
+=======
+        denom = FourPI / 2 * delt * dt / c * qom[is] * rhons[is][N][j][k] / (1.0 + omcx * omcx + omcy * omcy + omcz * omcz);
+>>>>>>> master
         susxx[j][k] += (  1.0 + omcx * omcx) * denom;
         susxy[j][k] += ( omcz + omcx * omcy) * denom;
         susxz[j][k] += (-omcy + omcx * omcz) * denom;
@@ -2919,6 +2923,7 @@ void EMfields3D::sustensorY(double **susyx, double **susyy, double **susyz, int 
         omcy = beta * (Byn[i][N][k] + Fext*By_ext[i][N][k]);
         omcz = beta * (Bzn[i][N][k] + Fext*Bz_ext[i][N][k]);
         denom = FourPI / 2 * delt * dt / c * qom[is] * rhons[is][i][N][k] / (1.0 + omcx * omcx + omcy * omcy + omcz * omcz);
+
         susyx[i][k] += (-omcz + omcx * omcy) * denom;
         susyy[i][k] += (  1.0 + omcy * omcy) * denom;
         susyz[i][k] += (+omcx + omcy * omcz) * denom;
@@ -2944,6 +2949,7 @@ void EMfields3D::sustensorY(double **susyx, double **susyy, double **susyz, int 
         omcy = beta * (Byn[i][N][k] + Fext*By_ext[i][N][k]);
         omcz = beta * (Bzn[i][N][k] + Fext*Bz_ext[i][N][k]);
         denom = FourPI / 2 * delt * dt / c * qom[is] * rhons[is][i][N][k] / (1.0 + omcx * omcx + omcy * omcy + omcz * omcz);
+
         susyx[i][k] += (-omcz + omcx * omcy) * denom;
         susyy[i][k] += (  1.0 + omcy * omcy) * denom;
         susyz[i][k] += (+omcx + omcy * omcz) * denom;
@@ -2969,7 +2975,9 @@ void EMfields3D::sustensorZ(double **suszx, double **suszy, double **suszz, int 
         omcy = beta * (Byn[i][j][N] + Fext*By_ext[i][j][N]);
         omcz = beta * (Bzn[i][j][N] + Fext*Bz_ext[i][j][N]);
 
+
         denom = FourPI / 2 * delt * dt / c * qom[is] * rhons[is][i][j][N] / (1.0 + omcx * omcx + omcy * omcy + omcz * omcz);
+
 
         suszx[i][j] += ( omcy + omcx * omcz) * denom;
         suszy[i][j] += (-omcx + omcy * omcz) * denom;
