@@ -32,6 +32,7 @@ class Collective
 : public InterfaceFluid
 #endif
   {
+    friend class MonteCarlo;
   public:
     /*! constructor: initialize physical parameters with values */
     Collective(int argc, char **argv);
@@ -236,6 +237,14 @@ class Collective
     /*! get initfile */
     string getinitfile();
 
+    /* MonteCarlo plug-in */
+    string getCollisions();
+    string getGas();
+    double getGasT();
+    double getGasN();
+    double getDensityRatio();
+    double getReducedC();
+
   private:
     /*! inputfile */
     string inputfile;
@@ -433,6 +442,14 @@ class Collective
     int RestartOutputCycle;
     /*! Output for diagnostics */
     int DiagnosticsOutputCycle;
+
+    /*! MonteCarlo plug-in */
+    string Collisions;
+    string Gas;
+    double GasT;
+    double GasN;
+    double DensityRatio;  // density plasma / density gas
+    double ReducedC;
 };
 
 #endif

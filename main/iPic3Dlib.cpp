@@ -1,8 +1,6 @@
 
 #include "iPic3D.h"
 
-using namespace iPic3D;
-
 int c_Solver::Init(int argc, char **argv) {
   // initialize MPI environment
   // nprocs = number of processors
@@ -76,6 +74,7 @@ int c_Solver::Init(int argc, char **argv) {
     else if (col->getCase()=="DoubleHarris")    EMf->initDoublePeriodicHarrisWithGaussianHumpPerturbation(vct,grid,col);
     else if (col->getCase()=="Whistler")    EMf->initDoublePeriodicHarrisWithGaussianHumpPerturbation(vct,grid,col);
     else if (col->getCase()=="WhistlerKappa")    EMf->initDoublePeriodicHarrisWithGaussianHumpPerturbation(vct,grid,col);
+    else if (col->getCase()=="DoubleGEM") EMf->initDoubleGEM(vct,grid,col);
     else {
       if (myrank==0) {
         cout << " =========================================================== " << endl;
@@ -117,8 +116,8 @@ int c_Solver::Init(int argc, char **argv) {
         else if (col->getCase()=="DoubleHarris")    part[i].maxwellian_reversed(grid, EMf, vct);
         else if (col->getCase()=="Whistler")    part[i].maxwellian_whistler(grid, EMf, vct);
         else if (col->getCase()=="WhistlerKappa")    part[i].kappa(grid, EMf, vct);
+        else if (col->getCase()=="DoubleGEM") part[i].MaxwellianDoubleGEM(grid,EMf,vct);
        else                                  part[i].maxwellian(grid, EMf, vct);
-
     }
   }
 
@@ -190,10 +189,12 @@ int c_Solver::Init(int argc, char **argv) {
   return 0;
 }
 
-void c_Solver::GatherMoments(){
+void c_Solver::GatherMoments(int cycle){
   // timeTasks.resetCycle();
   // interpolation
   // timeTasks.start(TimeTasks::MOMENTS);
+
+  EMf->setDT_counter(cycle );
 
   EMf->updateInfoFields(grid,vct,col);
   EMf->setZeroDensities();                  // set to zero the densities
@@ -210,6 +211,10 @@ void c_Solver::GatherMoments(){
 
   // EMf->ConstantChargeOpenBC(grid, vct);     // Set a constant charge in the OpenBC boundaries
 
+  // generalised Ohm's law - electrons
+  EMf->Ohm_Law(vct, grid);
+  // generalised Ohm's law - ions
+  EMf->Ohm_Law_Ions(vct, grid);
 }
 
 void c_Solver::UpdateCycleInfo(int cycle) {
@@ -222,7 +227,6 @@ void c_Solver::UpdateCycleInfo(int cycle) {
       EMf->SetLambda(grid);
     }
   }
-
 
 }
 
@@ -267,7 +271,7 @@ bool c_Solver::ParticlesMover() {
   for (int i = 0; i < ns; i++)  // move each species
   {
     // #pragma omp task inout(part[i]) in(grid) target_device(booster)
-    mem_avail = part[i].mover_PC_sub(grid, vct, EMf); // use the Predictor Corrector scheme 
+        mem_avail = part[i].mover_PC_sub(grid, vct, EMf); // use the Predictor Corrector scheme 
   }
   // timeTasks.end(TimeTasks::PARTICLES);
 
@@ -372,7 +376,7 @@ void c_Solver::WriteConserved(int cycle) {
   //}
 }
 
-void c_Solver::WriteOutput(int cycle) {
+void c_Solver::WriteOutput(int cycle, MonteCarlo *MC) {
 
   if (col->getWriteMethod() == "h5hut") {
 
@@ -391,7 +395,12 @@ void c_Solver::WriteOutput(int cycle) {
     // OUTPUT to large file, called proc**
     if (cycle % (col->getFieldOutputCycle()) == 0 || cycle == first_cycle) {
       hdf5_agent.open_append(SaveDirName + "/proc" + num_proc.str() + ".hdf");
-      output_mgr.output("Eall + Ball + rhos + Jsall + pressure", cycle);
+
+      if (MC->getMonteCarloPlugIn()== "yes"){
+        output_mgr.output("Eall + Ball + rhos + Jsall + pressure + inertia +MC", cycle);
+      } else{
+        output_mgr.output("Eall + Ball + rhos + Jsall + pressure + inertia", cycle);
+      }
       // Pressure tensor is available
       hdf5_agent.close();
     }
@@ -457,4 +466,15 @@ void c_Solver::Finalize() {
   delete[]momentum;
   // close MPI
   mpi->finalize_mpi();
+}
+
+void c_Solver::WriteCollisionDiagnostics(MonteCarlo *MCC, int cycle){
+  if ( cycle % (col->getFieldOutputCycle()) == 0 || cycle == first_cycle) {
+
+    MCC->setZeroMCCDiagnostics();
+
+    for (int i = 0; i < ns; i++){
+      part[i].interpCollisions2G(MCC, grid, vct, cycle- col->getFieldOutputCycle(), cycle);
+    }
+  } // end check on cycle                                         
 }

@@ -20,6 +20,7 @@ developers: Stefano Markidis, Enrico Camporeale, Giovanni Lapenta, David Burgess
  *
  */
 class Particles3D:public Particles3Dcomm {
+  friend class MonteCarlo;
   public:
     /** constructor */
     Particles3D();
@@ -42,6 +43,8 @@ class Particles3D:public Particles3Dcomm {
     void maxwellian_whistler(Grid * grid, Field * EMf, VirtualTopology3D * vct);
     /** Initial condition: uniform in space with Kappa */
     void kappa(Grid * grid, Field * EMf, VirtualTopology3D * vct);
+    /** Initial condition: uniform in space and maxwellian in velocity- double periodic */
+    void MaxwellianDoubleGEM(Grid * grid, Field * EMf, VirtualTopology3D * vct);
     /** Initial condition: uniform in space and maxwellian in velocity */
     void MaxwellianFromFields(Grid * grid, Field * EMf, VirtualTopology3D * vct);
     /** Force Free initialization (JxB=0) for particles */

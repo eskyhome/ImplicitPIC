@@ -21,6 +21,8 @@ developers: D. Burgess, June/July 2006
 #include "VCtopology3D.h"
 #include "MPIdata.h"
 
+#include "MonteCarlo.h"
+
 using std::string;
 using std::stringstream;
 using std::ofstream;
@@ -283,6 +285,7 @@ template < class Toa > class myOutputAgent:public PSK::OutputAgent < Toa > {
   VCtopology3D *_vct;
   MPIdata *_mpi;
   Collective *_col;
+  MonteCarlo *_MC;
   int ns;
   // std::vector<Particles1DX*> _part;
   std::vector < Particles * >_part;
@@ -303,6 +306,9 @@ public:
     _part.push_back(part);
   }
 
+  void set_simulation_pointers_MC(MonteCarlo *MC){
+    _MC = MC;
+  }
 
   /** method to write on disk. Acceptable tags are:
 
@@ -329,6 +335,8 @@ public:
     B_energy -> energy of magnetic field
     E_energy -> energy of electric field
 
+    // Inertia!!!
+    inertia -> stuff for Ohm's law
 */
 
   void output(const string & tag, int cycle) {
@@ -564,6 +572,34 @@ public:
       }
     }
 
+     if (tag.find("MC", 0) != string::npos) {
+      for (int i = 0; i < ns; ++i) {
+        stringstream ii;
+        ii << i;
+        this->output_adaptor.write("/MC/species_" + ii.str() + "/CF_eIonElastic/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getCF_eIonElastic());
+        this->output_adaptor.write("/MC/species_" + ii.str() + "/CF_eIonExc/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getCF_eIonExc());
+        this->output_adaptor.write("/MC/species_" + ii.str() + "/CF_eIonIz/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getCF_eIonIz());
+        this->output_adaptor.write("/MC/species_" + ii.str() + "/CF_IonIonCX/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getCF_IonIonCX());
+        this->output_adaptor.write("/MC/species_" + ii.str() + "/CF_IonIonElastic/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getCF_IonIonElastic());
+
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/CF_affected/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getCF_affected());
+
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dPx/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dPx());
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dPy/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dPy());
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dPz/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dPz());
+	
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dE/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dE());
+	
+	// MA
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dP_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dP_MA_x());
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dP_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dP_MA_y());
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dP_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dP_MA_z());
+	
+	this->output_adaptor.write("/MC/species_" + ii.str() + "/C_dE_MA/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), i, _MC->getC_dE_MA());
+	
+      }
+    }
+    
     // kinetic energy for species s (normalized on q)
     if (tag.find("k_energy", 0) != string::npos) {
       double K_en;
@@ -606,6 +642,81 @@ public:
       E_en = E_en / 32 / atan(1.0); // here there should be a getfourPI for the right value of pi 
       this->output_adaptor.write("/energy/electric/cycle_" + cc.str(), E_en);
     }
+
+    if (tag.find("inertia", 0) != string::npos) {
+
+      // T1_MA
+      this->output_adaptor.write("/inertia/T1_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT1_MA_x());
+      this->output_adaptor.write("/inertia/T1_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT1_MA_y());
+      this->output_adaptor.write("/inertia/T1_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT1_MA_z());
+
+      // T2_MA
+      this->output_adaptor.write("/inertia/T2_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT2_MA_x());
+      this->output_adaptor.write("/inertia/T2_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT2_MA_y());
+      this->output_adaptor.write("/inertia/T2_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT2_MA_z());
+
+      // T3_MA
+      this->output_adaptor.write("/inertia/T3_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT3_MA_x());
+      this->output_adaptor.write("/inertia/T3_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT3_MA_y());
+      this->output_adaptor.write("/inertia/T3_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT3_MA_z());
+
+      // T4_MA
+      this->output_adaptor.write("/inertia/T4_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT4_MA_x());
+      this->output_adaptor.write("/inertia/T4_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT4_MA_y());
+      this->output_adaptor.write("/inertia/T4_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT4_MA_z());
+
+      // J_MA
+      this->output_adaptor.write("/inertia/Je_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getJe_MA_x());
+      this->output_adaptor.write("/inertia/Je_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getJe_MA_y());
+      this->output_adaptor.write("/inertia/Je_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getJe_MA_z());
+
+      // rho_MA
+      this->output_adaptor.write("/inertia/rhoe_MA/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getRhoe_MA());
+
+      // ions
+      // T1_MA_I
+      this->output_adaptor.write("/inertia/T1_MA_I_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT1_MA_I_x());
+      this->output_adaptor.write("/inertia/T1_MA_I_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT1_MA_I_y());
+      this->output_adaptor.write("/inertia/T1_MA_I_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT1_MA_I_z());
+
+      // T2_MA_I
+      this->output_adaptor.write("/inertia/T2_MA_I_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT2_MA_I_x());
+      this->output_adaptor.write("/inertia/T2_MA_I_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT2_MA_I_y());
+      this->output_adaptor.write("/inertia/T2_MA_I_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT2_MA_I_z());
+
+      // T3_MA_I
+      this->output_adaptor.write("/inertia/T3_MA_I_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT3_MA_I_x());
+      this->output_adaptor.write("/inertia/T3_MA_I_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT3_MA_I_y());
+      this->output_adaptor.write("/inertia/T3_MA_I_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT3_MA_I_z());
+
+      // T4_MA
+      this->output_adaptor.write("/inertia/T4_MA_I_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT4_MA_I_x());
+      this->output_adaptor.write("/inertia/T4_MA_I_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT4_MA_I_y());
+      this->output_adaptor.write("/inertia/T4_MA_I_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getT4_MA_I_z());
+
+      // J_MA
+      this->output_adaptor.write("/inertia/Ji_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getJi_MA_x());
+      this->output_adaptor.write("/inertia/Ji_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getJi_MA_y());
+      this->output_adaptor.write("/inertia/Ji_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getJi_MA_z());
+
+      // rho_MA
+      this->output_adaptor.write("/inertia/rhoi_MA/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getRhoi_MA());
+      // end ions
+      
+      // E_MA
+      this->output_adaptor.write("/inertia/E_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getE_MA_x());
+      this->output_adaptor.write("/inertia/E_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getE_MA_y());
+      this->output_adaptor.write("/inertia/E_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getE_MA_z());
+   
+      // B_MA
+      this->output_adaptor.write("/inertia/B_MA_x/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getB_MA_x());
+      this->output_adaptor.write("/inertia/B_MA_y/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getB_MA_y());
+      this->output_adaptor.write("/inertia/B_MA_z/cycle_" + cc.str(), PSK::Dimens(_grid->getNXN() - 2, _grid->getNYN() - 2, _grid->getNZN() - 2), _field->getB_MA_z());
+
+    }
+    
+    // end inertia - fields
+
 
   }
 

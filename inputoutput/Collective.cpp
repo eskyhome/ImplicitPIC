@@ -42,6 +42,8 @@ void Collective::ReadInput(string inputfile) {
 
     delta = config.read < double >("delta");
 
+    Collisions        = config.read<string>("Collisions");
+
     Case              = config.read<string>("Case");
     FieldsInit        = config.read<string>("FieldsInit");
     PartInit          = config.read<string>("PartInit");
@@ -469,6 +471,19 @@ void Collective::ReadInput(string inputfile) {
       w0[1] = w00.f;
     }
 
+    Gas= config.read < string > ("Gas");
+    GasT = config.read < double > ("GasT");
+    GasN = config.read < double > ("GasN");
+    DensityRatio = config.read < double > ("DensityRatio");
+    ReducedC = config.read < double > ("ReducedC");
+    if (Collisions == "yes"){
+
+      if (DensityRatio >1.0){
+        cout << "DensityRatio must be <1.0, aborting ..." << endl;
+        abort();
+      }
+    }
+
     verbose = config.read < bool > ("verbose");
 
     // PHI Electrostatic Potential 
@@ -517,6 +532,32 @@ void Collective::ReadInput(string inputfile) {
     bcEz[4] = bcEMfaceZright == 0 ? 2 : 1;   bcBz[4] = bcEMfaceZright == 0 ? 1 : 2;
     bcEz[5] = bcEMfaceZleft  == 0 ? 2 : 1;   bcBz[5] = bcEMfaceZleft  == 0 ? 1 : 2;
 
+
+    // open Daughton-like BCs; not implemented in z
+        
+    if (bcEMfaceXright == 3) {
+      bcEx[0] = 1;   bcBx[0] = 2;
+      bcEy[0] = 2;   bcBy[0] = 2;
+      bcEz[0] = 2;   bcBz[0] = 1;
+    }
+    if (bcEMfaceXleft == 3) {
+      bcEx[1] = 1;   bcBx[1] = 2;
+      bcEy[1] = 2;   bcBy[1] = 2;
+      bcEz[1] = 2;   bcBz[1] = 1;
+    }
+    if (bcEMfaceYright == 3) {
+      bcEx[2] = 2;   bcBx[2] = 1;
+      bcEy[2] = 2;   bcBy[2] = 2;
+      bcEz[2] = 2;   bcBz[2] = 1;
+    }
+    if (bcEMfaceYleft == 3) {
+      bcEx[3] = 2;   bcBx[3] = 1;
+      bcEy[3] = 2;   bcBy[3] = 2;
+      bcEz[3] = 2;   bcBz[3] = 1;
+    }
+    
+    // end open Daughton-like BCs
+
     // Particles Boundary condition
     bcPfaceXright = config.read < int >("bcPfaceXright");
     bcPfaceXleft  = config.read < int >("bcPfaceXleft");
@@ -542,6 +583,13 @@ void Collective::ReadInput(string inputfile) {
     TrackParticleID[4] = TrackParticleID0.e;
   if (ns > 5)
     TrackParticleID[5] = TrackParticleID0.f;
+
+  if (Collisions== "yes"){
+    for (int is=0; is<ns; is++){
+      TrackParticleID[is]= 1;
+    }
+  }
+
 
   } catch (ConfigFile::key_not_found k) {
     std::cout << " ERROR: Key not found = " << k.key.c_str() << std::endl;
@@ -817,6 +865,11 @@ Collective::Collective(int argc, char **argv) {
   }
 
   ReadInput(inputfile);
+
+  //if (nzc == 1) {Lz= 1.0;}
+  //if (nyc == 1) {Ly= 1.0;}
+  //if (nxc == 1) {Lx= 1.0;}
+
   /*! fourpi = 4 greek pi */
   fourpi = 16.0 * atan(1.0);
   /*! dx = space step - X direction */
@@ -1290,3 +1343,27 @@ int Collective::getRestartOutputCycle() {
 int Collective::getDiagnosticsOutputCycle() {
   return (DiagnosticsOutputCycle);
 }
+
+/*! Collisions or not */
+string Collective::getCollisions() {
+  return (Collisions);
+}
+/*! which background Gas */
+string Collective::getGas() {
+  return (Gas);
+}
+/*! gas density in m-3*/
+double Collective::getGasN(){
+  return (GasN);
+}
+/*! gas temperature in K*/
+double Collective::getGasT(){
+  return (GasT);
+}
+double Collective::getDensityRatio(){
+  return (DensityRatio);
+}
+double Collective::getReducedC(){
+  return (ReducedC);
+}
+
