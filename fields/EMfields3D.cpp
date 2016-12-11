@@ -2928,33 +2928,8 @@ void EMfields3D::sustensorY(double **susyx, double **susyy, double **susyz, int 
       }
   }
 
-
-
-/*! Calculate the susceptibility on the Y boundary */
-void EMfields3D::sustensorY(double **susyx, double **susyy, double **susyz, int N) {
-  double beta, omcx, omcy, omcz, denom;
-  for (int i = 0; i < nxn; i++)
-    for (int k = 0; k < nzn; k++) {
-      susyx[i][k] = 0.0;
-      susyy[i][k] = 1.0;
-      susyz[i][k] = 0.0;
-    }
-  for (int is = 0; is < ns; is++) {
-    beta = .5 * qom[is] * dt / c;
-    for (int i = 0; i < nxn; i++)
-      for (int k = 0; k < nzn; k++) {
-        omcx = beta * (Bxn[i][N][k] + Fext*Bx_ext[i][N][k]);
-        omcy = beta * (Byn[i][N][k] + Fext*By_ext[i][N][k]);
-        omcz = beta * (Bzn[i][N][k] + Fext*Bz_ext[i][N][k]);
-        denom = FourPI / 2 * delt * dt / c * qom[is] * rhons[is][i][N][k] / (1.0 + omcx * omcx + omcy * omcy + omcz * omcz);
-
-        susyx[i][k] += (-omcz + omcx * omcy) * denom;
-        susyy[i][k] += (  1.0 + omcy * omcy) * denom;
-        susyz[i][k] += (+omcx + omcy * omcz) * denom;
-      }
-  }
-
 }
+
 
 /*! Calculate the susceptibility on the Z boundary */
 void EMfields3D::sustensorZ(double **suszx, double **suszy, double **suszz, int N) {
