@@ -2281,7 +2281,7 @@ void EMfields3D::SetDipole_3Bext(VirtualTopology3D *vct, Grid *grid, Collective 
 void EMfields3D::SetDipole_2Bext(VirtualTopology3D *vct, Grid *grid, Collective *col){
 
   /* -- NOTE: Hardcoded option */
-  bool twodim  = true; // Two dimensional run
+  bool twodim  = false; // Two dimensional run
   double z_dec = 0.16;  // De-centering from z_center in planet radius
   /* -- END NOTE -- */
 
