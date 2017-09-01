@@ -911,7 +911,7 @@ int Particles3D::particle_repopulator(Grid* grid,VirtualTopology3D* vct, Field* 
   /* -- NOTE: Hardcoded option -- */
   enum {LINEAR,INITIAL,FFIELD};
   int rtype = LINEAR;
-  float rmin = 0.97;
+  float rmin = 0.2;//0.97;
   float rmax = 1.0 - rmin;
   /* -- END NOTE -- */
 

@@ -2281,7 +2281,7 @@ void EMfields3D::SetDipole_3Bext(VirtualTopology3D *vct, Grid *grid, Collective 
 void EMfields3D::SetDipole_2Bext(VirtualTopology3D *vct, Grid *grid, Collective *col){
 
   /* -- NOTE: Hardcoded option */
-  bool twodim  = true; // Two dimensional run
+  bool twodim  = false; // Two dimensional run
   double z_dec = 0.16;  // De-centering from z_center in planet radius
   /* -- END NOTE -- */
 
@@ -2445,6 +2445,9 @@ void EMfields3D::SetLambda(Grid *grid){
   double rmax   = 4.0 * M_PI / dx;
   /* -- END NOTE -- */
 
+	double external_radius = 0.9;
+	double r;
+	double scale_decay = 0.1;
   for (int i=0; i < nxn; i++){
     for (int j=0; j < nyn; j++){
       for (int k=0; k < nzn; k++){
@@ -2463,6 +2466,14 @@ void EMfields3D::SetLambda(Grid *grid){
           if      (x < xmax_r) Lambda[i][j][k] = ((x - xmin_r) /  (xmax_r - xmin_r)) * rmax;
           else                 Lambda[i][j][k] = rmax;
         }
+        r = sqrt( pow(grid->getYN(i,j,k)-Ly/2.0,2.0) ) / (0.5 * Ly);
+         				if(r>external_radius-scale_decay){
+         					Lambda[i][j][k]  = rmax* tanh((r-(external_radius-scale_decay))/scale_decay);
+         				}
+         				r = sqrt( pow(grid->getZN(i,j,k)-Lz/2.0,2.0) ) / (0.5 * Lz);
+         				if(r>external_radius-scale_decay){
+         					Lambda[i][j][k]  = rmax* tanh((r-(external_radius-scale_decay))/scale_decay);
+         				}
 
       }
     }
