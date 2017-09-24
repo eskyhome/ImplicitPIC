@@ -512,7 +512,7 @@ void Particles3D::get_weights(Grid * grid, double xp, double yp, double zp, int&
         weights[ii][jj][kk] = xi[ii] * eta[jj] * zeta[kk] * invVOL;
 }
 
-void Particles3D::get_El(const double weights[2][2][2], int ix, int iy, int iz, double& Exl, double& Eyl, double& Ezl, double*** Ex, double*** Ey, double*** Ez){
+void Particles3D::get_El(const double weights[2][2][2], int ix, int iy, int iz, double& Exl, double& Eyl, double& Ezl, double*** Ex, double*** Ey, double*** Ez, double*** Ex_ext, double*** Ey_ext, double*** Ez_ext){
 
   Exl = 0.0;
   Eyl = 0.0;
@@ -522,9 +522,9 @@ void Particles3D::get_El(const double weights[2][2][2], int ix, int iy, int iz, 
   for (int i=0; i<=1; i++)
     for (int j=0; j<=1; j++)
       for (int k=0; k<=1; k++) {
-        Exl += weights[i][j][k] * Ex[ix-i][iy-j][iz-k];
-        Eyl += weights[i][j][k] * Ey[ix-i][iy-j][iz-k];
-        Ezl += weights[i][j][k] * Ez[ix-i][iy-j][iz-k];
+        Exl += weights[i][j][k] * (Ex[ix-i][iy-j][iz-k] + Ex_ext[ix-i][iy-j][iz-k]);
+        Eyl += weights[i][j][k] * (Ey[ix-i][iy-j][iz-k] + Ey_ext[ix-i][iy-j][iz-k]);
+        Ezl += weights[i][j][k] * (Ez[ix-i][iy-j][iz-k] + Ez_ext[ix-i][iy-j][iz-k]);
         l = l + 1;
       }
 
@@ -786,6 +786,11 @@ int Particles3D::mover_PC_sub(Grid * grid, VirtualTopology3D * vct, Field * EMf)
   double ***By_ext = asgArr3(double, grid->getNXN(), grid->getNYN(), grid->getNZN(), EMf->getBy_ext());
   double ***Bz_ext = asgArr3(double, grid->getNXN(), grid->getNYN(), grid->getNZN(), EMf->getBz_ext());
 
+  double ***Ex_ext = asgArr3(double, grid->getNXN(), grid->getNYN(), grid->getNZN(), EMf->getEx_ext());
+  double ***Ey_ext = asgArr3(double, grid->getNXN(), grid->getNYN(), grid->getNZN(), EMf->getEy_ext());
+  double ***Ez_ext = asgArr3(double, grid->getNXN(), grid->getNYN(), grid->getNZN(), EMf->getEz_ext());
+
+
   double Fext = EMf->getFext();
 
   // const double dto2 = .5 * dt, qomdt2 = qom * dto2 / c;
@@ -846,7 +851,7 @@ int Particles3D::mover_PC_sub(Grid * grid, VirtualTopology3D * vct, Field * EMf)
 
         get_weights(grid, xp, yp, zp, ix, iy, iz, weights);
         get_Bl(weights, ix, iy, iz, Bxl, Byl, Bzl, Bx, By, Bz, Bx_ext, By_ext, Bz_ext, Fext);
-        get_El(weights, ix, iy, iz, Exl, Eyl, Ezl, Ex, Ey, Ez);
+        get_El(weights, ix, iy, iz, Exl, Eyl, Ezl, Ex, Ey, Ez, Ex_ext, Ey_ext, Ez_ext);
 
         // end interpolation
         const double omdtsq = qomdt2 * qomdt2 * (Bxl * Bxl + Byl * Byl + Bzl * Bzl);

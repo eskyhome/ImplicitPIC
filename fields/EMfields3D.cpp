@@ -125,6 +125,10 @@ EMfields3D::EMfields3D(Collective * col, Grid * grid) {
   Bx_ext = newArr3(double,nxn,nyn,nzn);
   By_ext = newArr3(double,nxn,nyn,nzn);
   Bz_ext = newArr3(double,nxn,nyn,nzn);
+  // External imposed fields
+  Ex_ext = newArr3(double,nxn,nyn,nzn);
+  Ey_ext = newArr3(double,nxn,nyn,nzn);
+  Ez_ext = newArr3(double,nxn,nyn,nzn);
   // Jx_ext = newArr3(double,nxn,nyn,nzn);
   // Jy_ext = newArr3(double,nxn,nyn,nzn);
   // Jz_ext = newArr3(double,nxn,nyn,nzn);
@@ -1386,12 +1390,15 @@ void EMfields3D::sumOverSpeciesJ() {
 /*! initialize Magnetic and Electric Field with initial configuration */
 void EMfields3D::init(VirtualTopology3D * vct, Grid * grid, Collective *col) {
 
+	  float rmin = 0.2;//0.97;
+	  float rmax = 1.0 - rmin;
   if (restart1 == 0) {
     for (int i = 0; i < nxn; i++) {
       for (int j = 0; j < nyn; j++) {
         for (int k = 0; k < nzn; k++) {
           for (int is = 0; is < ns; is++) {
-            rhons[is][i][j][k] = rhoINIT[is] / FourPI;
+            //rhons[is][i][j][k] = rhoINIT[is] / FourPI;
+            rhons[is][i][j][k] = (rmin + rmax*(grid->getXC(i, j, k)/Lx)) / FourPI;
           }
           Bxn[i][j][k] = B0x;
           Byn[i][j][k] = B0y;
@@ -1400,9 +1407,12 @@ void EMfields3D::init(VirtualTopology3D * vct, Grid * grid, Collective *col) {
           u_0=col->getU0(0);
           v_0=col->getV0(0);
           w_0=col->getW0(0);
-          Ex[i][j][k] = w_0*Byn[i][j][k]-v_0*Bzn[i][j][k];
-          Ey[i][j][k] = u_0*Bzn[i][j][k]-w_0*Bxn[i][j][k];
-          Ez[i][j][k] = v_0*Bxn[i][j][k]-u_0*Byn[i][j][k];
+          Ex_ext[i][j][k] = w_0*Byn[i][j][k]-v_0*Bzn[i][j][k];
+          Ey_ext[i][j][k] = u_0*Bzn[i][j][k]-w_0*Bxn[i][j][k];
+          Ez_ext[i][j][k] = v_0*Bxn[i][j][k]-u_0*Byn[i][j][k];
+          Ex[i][j][k] = 0.0;
+          Ey[i][j][k] = 0.0;
+          Ez[i][j][k] = 0.0;
         }
       }
     }
@@ -2323,7 +2333,8 @@ void EMfields3D::SetDipole_2Bext(VirtualTopology3D *vct, Grid *grid, Collective 
           double Bme = sqrt(Bxe*Bxe + Bye*Bye + Bze*Bze);
 
           Bx_ext[i][j][k] = 0.0;
-          By_ext[i][j][k] = B1y == 0.0 ? 0.0 : (B1y/fabs(B1y)) * Bme;
+          //By_ext[i][j][k] = B1y == 0.0 ? 0.0 : (B1y/fabs(B1y)) * Bme;
+          By_ext[i][j][k] = 0.0;
           Bz_ext[i][j][k] = 0.0;
         }
         else {
@@ -2907,9 +2918,9 @@ void EMfields3D::updateInfoFields(Grid *grid,VirtualTopology3D *vct,Collective *
   /* -- END NOTE --*/
 
   double u_0, v_0, w_0;
-  u_0=col->getU0(0);
-  v_0=col->getV0(0);
-  w_0=col->getW0(0);
+  u_0=col->getU0(0)*0.0;
+  v_0=col->getV0(0)*0.0;
+  w_0=col->getW0(0)*0.0;
 
   if (vct->getXleft_neighbor() == MPI_PROC_NULL)
   {
@@ -3490,6 +3501,33 @@ double ***EMfields3D::getBy_ext() {
 /*!  get Bz_ext */
 double ***EMfields3D::getBz_ext() {
   return(Bz_ext);
+}
+
+
+/*! get Ex_ext(X,Y,Z)  */
+double &EMfields3D::getEx_ext(int indexX, int indexY, int indexZ) const{
+  return(Ex_ext[indexX][indexY][indexZ]);
+}
+/*!  get Ey_ext(X,Y,Z) */
+double &EMfields3D::getEy_ext(int indexX, int indexY, int indexZ) const{
+  return(Ey_ext[indexX][indexY][indexZ]);
+}
+/*!  get Ez_ext(X,Y,Z) */
+double &EMfields3D::getEz_ext(int indexX, int indexY, int indexZ) const{
+  return(Bz_ext[indexX][indexY][indexZ]);
+}
+
+/*! get Ex_ext  */
+double ***EMfields3D::getEx_ext() {
+  return(Ex_ext);
+}
+/*!  get By_ext */
+double ***EMfields3D::getEy_ext() {
+  return(Ey_ext);
+}
+/*!  get Bz_ext */
+double ***EMfields3D::getEz_ext() {
+  return(Ez_ext);
 }
 
 double ***&EMfields3D::getBxTot(){

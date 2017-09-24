@@ -380,6 +380,22 @@ class EMfields3D                // :public Field
     double ***&getByTot();
     double ***&getBzTot();
 
+
+
+    /** get Electric Field component X defined on node(indexX,indexY,indexZ) */
+    double &getEx_ext(int indexX, int indexY, int indexZ) const;
+    /** get Electric Field component Y defined on node(indexX,indexY,indexZ) */
+    double &getEy_ext(int indexX, int indexY, int indexZ) const;
+    /** get Electric Field component Z defined on node(indexX,indexY,indexZ) */
+    double &getEz_ext(int indexX, int indexY, int indexZ) const;
+
+    /** get Magnetic Field component X */
+    double ***getEx_ext();
+    /** get Magnetic Field component Y */
+    double ***getEy_ext();
+    /** get Magnetic Field component Z */
+    double ***getEz_ext();
+
     void UpdateFext(int cycle);
     double getFext();
 
@@ -630,6 +646,12 @@ class EMfields3D                // :public Field
     double***  Jy_ext;
     /*! External current field component-Z, defined on nodes */
     double***  Jz_ext;
+    /*! External electric field component-X, defined on nodes */
+    double***  Ex_ext;
+    /*! External electric field component-Y, defined on nodes */
+    double***  Ey_ext;
+    /*! External electric field component-Z, defined on nodes */
+    double***  Ez_ext;
 
     /*! Thermal velocities at the nodes for each component and total thermal velocity */
     double ****VthX;
