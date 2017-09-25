@@ -1389,14 +1389,15 @@ void EMfields3D::sumOverSpeciesJ() {
 
 /*! initialize Magnetic and Electric Field with initial configuration */
 void EMfields3D::init(VirtualTopology3D * vct, Grid * grid, Collective *col) {
+double rmin, rmax;
 
-	  float rmin = 0.2;//0.97;
-	  float rmax = 1.0 - rmin;
   if (restart1 == 0) {
     for (int i = 0; i < nxn; i++) {
       for (int j = 0; j < nyn; j++) {
         for (int k = 0; k < nzn; k++) {
           for (int is = 0; is < ns; is++) {
+        	    rmin = rhoINIT[is] * 0.2;//0.97;
+        	    rmax = rhoINIT[is] - rmin;
             //rhons[is][i][j][k] = rhoINIT[is] / FourPI;
             rhons[is][i][j][k] = (rmin + rmax*(grid->getXC(i, j, k)/Lx)) / FourPI;
           }

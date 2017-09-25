@@ -916,8 +916,8 @@ int Particles3D::particle_repopulator(Grid* grid,VirtualTopology3D* vct, Field* 
   /* -- NOTE: Hardcoded option -- */
   enum {LINEAR,INITIAL,FFIELD};
   int rtype = LINEAR;
-  float rmin = 0.2;//0.97;
-  float rmax = 1.0 - rmin;
+  float rmin = rhoINJECT * 0.2;//0.97;
+  float rmax = rhoINJECT - rmin;
   /* -- END NOTE -- */
 
   if (vct->getCartesian_rank()==0){
