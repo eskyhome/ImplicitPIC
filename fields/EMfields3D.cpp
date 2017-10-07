@@ -2334,8 +2334,8 @@ void EMfields3D::SetDipole_2Bext(VirtualTopology3D *vct, Grid *grid, Collective 
           double Bme = sqrt(Bxe*Bxe + Bye*Bye + Bze*Bze);
 
           Bx_ext[i][j][k] = 0.0;
-          //By_ext[i][j][k] = B1y == 0.0 ? 0.0 : (B1y/fabs(B1y)) * Bme;
-          By_ext[i][j][k] = 0.0;
+          By_ext[i][j][k] = B1y == 0.0 ? 0.0 : (B1y/fabs(B1y)) * Bme;
+          //By_ext[i][j][k] = 0.0;
           Bz_ext[i][j][k] = 0.0;
         }
         else {
